@@ -10,20 +10,20 @@ function CVVgui:CreateWindow(titleText)
     if not success then screenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui") end
 
     local mainFrame = Instance.new("Frame", screenGui)
-    mainFrame.Size = UDim2.new(0, 320, 0, 420)
-    mainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+    mainFrame.Size = UDim2.new(0, 300, 0, 250)
+    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -125)
     mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    mainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    mainFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
     mainFrame.BorderSizePixel = 1
     mainFrame.Active = true
 
     local title = Instance.new("TextLabel", mainFrame)
     title.Size = UDim2.new(1, 0, 0, 25)
     title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    title.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    title.BorderColor3 = Color3.fromRGB(40, 40, 40)
     title.BorderSizePixel = 1
     title.Text = titleText
-    title.TextColor3 = Color3.fromRGB(255, 0, 0)
+    title.TextColor3 = Color3.fromRGB(220, 220, 220)
     title.Font = Enum.Font.Code
     title.TextSize = 14
 
@@ -63,11 +63,11 @@ end
 function CVVgui:CreateButton(parent, text, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    btn.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    btn.BorderColor3 = Color3.fromRGB(40, 40, 40)
     btn.BorderSizePixel = 1
     btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
     btn.Font = Enum.Font.Code
     btn.TextSize = 14
 
@@ -78,7 +78,7 @@ function CVVgui:CreateSlider(parent, text, minVal, maxVal, defaultVal, callback)
     local sliderFrame = Instance.new("Frame", parent)
     sliderFrame.Size = UDim2.new(1, 0, 0, 45)
     sliderFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    sliderFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    sliderFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
     sliderFrame.BorderSizePixel = 1
 
     local label = Instance.new("TextLabel", sliderFrame)
@@ -86,7 +86,7 @@ function CVVgui:CreateSlider(parent, text, minVal, maxVal, defaultVal, callback)
     label.Position = UDim2.new(0, 5, 0, 2)
     label.BackgroundTransparency = 1
     label.Text = text .. ": " .. tostring(defaultVal)
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
     label.Font = Enum.Font.Code
     label.TextSize = 13
     label.TextXAlignment = Enum.TextXAlignment.Left
@@ -94,13 +94,13 @@ function CVVgui:CreateSlider(parent, text, minVal, maxVal, defaultVal, callback)
     local track = Instance.new("Frame", sliderFrame)
     track.Size = UDim2.new(1, -10, 0, 12)
     track.Position = UDim2.new(0, 5, 0, 25)
-    track.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    track.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    track.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    track.BorderColor3 = Color3.fromRGB(40, 40, 40)
     track.BorderSizePixel = 1
 
     local fill = Instance.new("Frame", track)
     fill.Size = UDim2.new((defaultVal - minVal) / (maxVal - minVal), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     fill.BorderSizePixel = 0
 
     local isDragging = false
@@ -131,16 +131,6 @@ function CVVgui:CreateSlider(parent, text, minVal, maxVal, defaultVal, callback)
             update(input)
         end
     end))
-end
-
-function CVVgui:CreateImage(parent, imageId, height)
-    local img = Instance.new("ImageLabel", parent)
-    img.Size = UDim2.new(1, 0, 0, height or 100)
-    img.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-    img.BorderColor3 = Color3.fromRGB(255, 0, 0)
-    img.BorderSizePixel = 1
-    img.Image = "rbxassetid://" .. tostring(imageId)
-    img.ScaleType = Enum.ScaleType.Fit
 end
 
 function CVVgui:Unload(screenGui)
