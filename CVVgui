@@ -1,0 +1,83 @@
+local CVVgui = {}
+CVVgui.Connections = {}
+
+function CVVgui:CreateWindow(titleText)
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "CVVgui_Main"
+    screenGui.ResetOnSpawn = false
+    
+    local success = pcall(function() screenGui.Parent = game:GetService("CoreGui") end)
+    if not success then screenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui") end
+
+    local mainFrame = Instance.new("Frame", screenGui)
+    mainFrame.Size = UDim2.new(0, 300, 0, 400)
+    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    mainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    mainFrame.BorderSizePixel = 1
+    mainFrame.Active = true
+
+    local title = Instance.new("TextLabel", mainFrame)
+    title.Size = UDim2.new(1, 0, 0, 25)
+    title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    title.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    title.BorderSizePixel = 1
+    title.Text = titleText
+    title.TextColor3 = Color3.fromRGB(255, 0, 0)
+    title.Font = Enum.Font.Code
+    title.TextSize = 14
+
+    local container = Instance.new("Frame", mainFrame)
+    container.Size = UDim2.new(1, -10, 1, -35)
+    container.Position = UDim2.new(0, 5, 0, 30)
+    container.BackgroundTransparency = 1
+
+    local layout = Instance.new("UIListLayout", container)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 5)
+
+    local dragging, dragInput, dragStart, startPos
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true 
+            dragStart = input.Position 
+            startPos = mainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    mainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+    end)
+    table.insert(self.Connections, game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end))
+
+    return container, screenGui
+end
+
+function CVVgui:CreateButton(parent, text, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    btn.BorderSizePixel = 1
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.Code
+    btn.TextSize = 14
+
+    table.insert(self.Connections, btn.MouseButton1Click:Connect(callback))
+end
+
+function CVVgui:Unload(screenGui)
+    for _, conn in ipairs(self.Connections) do
+        if conn.Connected then conn:Disconnect() end
+    end
+    table.clear(self.Connections)
+    if screenGui then screenGui:Destroy() end
+end
