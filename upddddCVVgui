@@ -1,5 +1,6 @@
 local CVVgui = {}
 CVVgui.Connections = {}
+CVVgui.IsInteracting = false
 
 function CVVgui:CreateWindow(titleText)
     local screenGui = Instance.new("ScreenGui")
@@ -38,7 +39,7 @@ function CVVgui:CreateWindow(titleText)
 
     local dragging, dragInput, dragStart, startPos
     mainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and not CVVgui.IsInteracting then
             dragging = true 
             dragStart = input.Position 
             startPos = mainFrame.Position
@@ -51,7 +52,7 @@ function CVVgui:CreateWindow(titleText)
         if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
     end)
     table.insert(self.Connections, game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
+        if input == dragInput and dragging and not CVVgui.IsInteracting then
             local delta = input.Position - dragStart
             mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
@@ -116,6 +117,7 @@ function CVVgui:CreateSlider(parent, text, minVal, maxVal, defaultVal, callback)
     table.insert(self.Connections, track.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             isDragging = true
+            CVVgui.IsInteracting = true
             update(input)
         end
     end))
@@ -123,6 +125,7 @@ function CVVgui:CreateSlider(parent, text, minVal, maxVal, defaultVal, callback)
     table.insert(self.Connections, game:GetService("UserInputService").InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             isDragging = false
+            CVVgui.IsInteracting = false
         end
     end))
 
