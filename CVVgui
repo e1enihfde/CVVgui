@@ -1,0 +1,376 @@
+local CVVgui = {}
+CVVgui.Connections = {}
+CVVgui.IsInteracting = false
+
+-- Система уведомлений (Notification System)
+local notifGui
+local notifContainer
+
+local function getNotifContainer()
+    if notifContainer and notifContainer.Parent then
+        return notifContainer
+    end
+    notifGui = Instance.new("ScreenGui")
+    notifGui.Name = "CVVgui_Notifs"
+    notifGui.ResetOnSpawn = false
+    pcall(function() notifGui.Parent = game:GetService("CoreGui") end)
+    if not notifGui.Parent then 
+        notifGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui") 
+    end
+
+    notifContainer = Instance.new("Frame", notifGui)
+    notifContainer.Size = UDim2.new(0, 240, 1, -20)
+    notifContainer.Position = UDim2.new(1, -250, 0, 10)
+    notifContainer.BackgroundTransparency = 1
+
+    local layout = Instance.new("UIListLayout", notifContainer)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+    layout.Padding = UDim.new(0, 6)
+
+    return notifContainer
+end
+
+function CVVgui:Notify(titleText, contentText, duration)
+    duration = duration or 3
+    local container = getNotifContainer()
+
+    local frame = Instance.new("Frame", container)
+    frame.Size = UDim2.new(1, 0, 0, 48)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    frame.BorderColor3 = Color3.fromRGB(45, 45, 45)
+    frame.BorderSizePixel = 1
+
+    local title = Instance.new("TextLabel", frame)
+    title.Size = UDim2.new(1, -10, 0, 20)
+    title.Position = UDim2.new(0, 8, 0, 4)
+    title.BackgroundTransparency = 1
+    title.Text = titleText or "Notification"
+    title.TextColor3 = Color3.fromRGB(220, 220, 220)
+    title.Font = Enum.Font.Code
+    title.TextSize = 13
+    title.TextXAlignment = Enum.TextXAlignment.Left
+
+    local desc = Instance.new("TextLabel", frame)
+    desc.Size = UDim2.new(1, -10, 0, 18)
+    desc.Position = UDim2.new(0, 8, 0, 24)
+    desc.BackgroundTransparency = 1
+    desc.Text = contentText or ""
+    desc.TextColor3 = Color3.fromRGB(150, 150, 150)
+    desc.Font = Enum.Font.Code
+    desc.TextSize = 12
+    desc.TextXAlignment = Enum.TextXAlignment.Left
+
+    task.delay(duration, function()
+        if frame then frame:Destroy() end
+    end)
+end
+
+function CVVgui:CreateWindow(titleText, toggleKey)
+    toggleKey = toggleKey or Enum.KeyCode.RightControl
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "CVVgui_Main"
+    screenGui.ResetOnSpawn = false
+    
+    local success = pcall(function() screenGui.Parent = game:GetService("CoreGui") end)
+    if not success then screenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui") end
+
+    local mainFrame = Instance.new("Frame", screenGui)
+    mainFrame.Size = UDim2.new(0, 360, 0, 300)
+    mainFrame.Position = UDim2.new(0.5, -180, 0.5, -150)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    mainFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    mainFrame.BorderSizePixel = 1
+    mainFrame.Active = true
+
+    local title = Instance.new("TextLabel", mainFrame)
+    title.Size = UDim2.new(1, 0, 0, 25)
+    title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    title.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    title.BorderSizePixel = 1
+    title.Text = "  " .. titleText
+    title.TextColor3 = Color3.fromRGB(220, 220, 220)
+    title.Font = Enum.Font.Code
+    title.TextSize = 14
+    title.TextXAlignment = Enum.TextXAlignment.Left
+
+    local tabBar = Instance.new("Frame", mainFrame)
+    tabBar.Size = UDim2.new(1, -10, 0, 26)
+    tabBar.Position = UDim2.new(0, 5, 0, 30)
+    tabBar.BackgroundTransparency = 1
+
+    local tabLayout = Instance.new("UIListLayout", tabBar)
+    tabLayout.FillDirection = Enum.FillDirection.Horizontal
+    tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tabLayout.Padding = UDim.new(0, 4)
+
+    local contentArea = Instance.new("Frame", mainFrame)
+    contentArea.Size = UDim2.new(1, -10, 1, -66)
+    contentArea.Position = UDim2.new(0, 5, 0, 60)
+    contentArea.BackgroundTransparency = 1
+
+    local dragging, dragInput, dragStart, startPos
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and not CVVgui.IsInteracting then
+            dragging = true 
+            dragStart = input.Position 
+            startPos = mainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    mainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+    end)
+    table.insert(self.Connections, game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging and not CVVgui.IsInteracting then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end))
+
+    table.insert(self.Connections, game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
+        if not gpe and input.KeyCode == toggleKey then
+            mainFrame.Visible = not mainFrame.Visible
+        end
+    end))
+
+    local windowObj = {
+        ScreenGui = screenGui,
+        MainFrame = mainFrame,
+        ContentArea = contentArea,
+        TabBar = tabBar,
+        Tabs = {}
+    }
+
+    function windowObj:CreateTab(tabName)
+        local tabBtn = Instance.new("TextButton", windowObj.TabBar)
+        tabBtn.Size = UDim2.new(0, 85, 1, 0)
+        tabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+        tabBtn.BorderColor3 = Color3.fromRGB(40, 40, 40)
+        tabBtn.BorderSizePixel = 1
+        tabBtn.Text = tabName
+        tabBtn.TextColor3 = Color3.fromRGB(140, 140, 140)
+        tabBtn.Font = Enum.Font.Code
+        tabBtn.TextSize = 12
+
+        local tabContainer = Instance.new("ScrollingFrame", windowObj.ContentArea)
+        tabContainer.Size = UDim2.new(1, 0, 1, 0)
+        tabContainer.BackgroundTransparency = 1
+        tabContainer.BorderSizePixel = 0
+        tabContainer.ScrollBarThickness = 3
+        tabContainer.ScrollBarImageColor3 = Color3.fromRGB(60, 60, 60)
+        tabContainer.Visible = false
+
+        local containerLayout = Instance.new("UIListLayout", tabContainer)
+        containerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        containerLayout.Padding = UDim.new(0, 6)
+
+        containerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            tabContainer.CanvasSize = UDim2.new(0, 0, 0, containerLayout.AbsoluteContentSize.Y + 10)
+        end)
+
+        local function activate()
+            for _, t in ipairs(windowObj.Tabs) do
+                t.Container.Visible = false
+                t.Button.TextColor3 = Color3.fromRGB(140, 140, 140)
+                t.Button.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+            end
+            tabContainer.Visible = true
+            tabBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+            tabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        end
+
+        tabBtn.MouseButton1Click:Connect(activate)
+
+        table.insert(windowObj.Tabs, {Button = tabBtn, Container = tabContainer})
+
+        if #windowObj.Tabs == 1 then
+            activate()
+        end
+
+        return tabContainer
+    end
+
+    return windowObj
+end
+
+function CVVgui:CreateButton(parent, text, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, -6, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    btn.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    btn.BorderSizePixel = 1
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.Font = Enum.Font.Code
+    btn.TextSize = 13
+
+    table.insert(self.Connections, btn.MouseButton1Click:Connect(function()
+        if callback then callback() end
+    end))
+end
+
+function CVVgui:CreateToggle(parent, text, defaultState, callback)
+    local enabled = defaultState or false
+
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, -6, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+    btn.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    btn.BorderSizePixel = 1
+    btn.Text = "  " .. text .. ": " .. (enabled and "[ ON ]" or "[ OFF ]")
+    btn.TextColor3 = enabled and Color3.fromRGB(230, 230, 230) or Color3.fromRGB(130, 130, 130)
+    btn.Font = Enum.Font.Code
+    btn.TextSize = 13
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+
+    table.insert(self.Connections, btn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        btn.Text = "  " .. text .. ": " .. (enabled and "[ ON ]" or "[ OFF ]")
+        btn.TextColor3 = enabled and Color3.fromRGB(230, 230, 230) or Color3.fromRGB(130, 130, 130)
+        if callback then callback(enabled) end
+    end))
+end
+
+function CVVgui:CreateSlider(parent, text, minVal, maxVal, defaultVal, callback)
+    local sliderFrame = Instance.new("Frame", parent)
+    sliderFrame.Size = UDim2.new(1, -6, 0, 45)
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    sliderFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    sliderFrame.BorderSizePixel = 1
+
+    local label = Instance.new("TextLabel", sliderFrame)
+    label.Size = UDim2.new(1, -10, 0, 20)
+    label.Position = UDim2.new(0, 5, 0, 2)
+    label.BackgroundTransparency = 1
+    label.Text = text .. ": " .. tostring(defaultVal)
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.Font = Enum.Font.Code
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local track = Instance.new("Frame", sliderFrame)
+    track.Size = UDim2.new(1, -10, 0, 12)
+    track.Position = UDim2.new(0, 5, 0, 25)
+    track.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    track.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    track.BorderSizePixel = 1
+
+    local fill = Instance.new("Frame", track)
+    fill.Size = UDim2.new((defaultVal - minVal) / (maxVal - minVal), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    fill.BorderSizePixel = 0
+
+    local isDragging = false
+
+    local function update(input)
+        local pos = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+        local value = math.floor(minVal + (maxVal - minVal) * pos)
+        fill.Size = UDim2.new(pos, 0, 1, 0)
+        label.Text = text .. ": " .. tostring(value)
+        if callback then callback(value) end
+    end
+
+    table.insert(self.Connections, track.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+            CVVgui.IsInteracting = true
+            update(input)
+        end
+    end))
+
+    table.insert(self.Connections, game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = false
+            CVVgui.IsInteracting = false
+        end
+    end))
+
+    table.insert(self.Connections, game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            update(input)
+        end
+    end))
+end
+
+function CVVgui:CreateDropdown(parent, text, options, defaultOpt, callback)
+    options = options or {}
+    local selected = defaultOpt or options[1] or ""
+    
+    local dropdownFrame = Instance.new("Frame", parent)
+    dropdownFrame.Size = UDim2.new(1, -6, 0, 30)
+    dropdownFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    dropdownFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    dropdownFrame.BorderSizePixel = 1
+    dropdownFrame.ClipsDescendants = false
+
+    local headerBtn = Instance.new("TextButton", dropdownFrame)
+    headerBtn.Size = UDim2.new(1, 0, 0, 30)
+    headerBtn.BackgroundTransparency = 1
+    headerBtn.Text = "  " .. text .. ": " .. tostring(selected) .. "  v"
+    headerBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    headerBtn.Font = Enum.Font.Code
+    headerBtn.TextSize = 12
+    headerBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+    local listFrame = Instance.new("Frame", dropdownFrame)
+    listFrame.Size = UDim2.new(1, 0, 0, #options * 24)
+    listFrame.Position = UDim2.new(0, 0, 1, 2)
+    listFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    listFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    listFrame.BorderSizePixel = 1
+    listFrame.Visible = false
+    listFrame.ZIndex = 10
+
+    local listLayout = Instance.new("UIListLayout", listFrame)
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    local isOpen = false
+
+    local function toggle()
+        isOpen = not isOpen
+        listFrame.Visible = isOpen
+        if isOpen then
+            dropdownFrame.Size = UDim2.new(1, -6, 0, 30 + #options * 24 + 4)
+        else
+            dropdownFrame.Size = UDim2.new(1, -6, 0, 30)
+        end
+    end
+
+    headerBtn.MouseButton1Click:Connect(toggle)
+
+    for _, opt in ipairs(options) do
+        local optBtn = Instance.new("TextButton", listFrame)
+        optBtn.Size = UDim2.new(1, 0, 0, 24)
+        optBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        optBtn.BorderColor3 = Color3.fromRGB(35, 35, 35)
+        optBtn.BorderSizePixel = 1
+        optBtn.Text = "  " .. tostring(opt)
+        optBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+        optBtn.Font = Enum.Font.Code
+        optBtn.TextSize = 12
+        optBtn.TextXAlignment = Enum.TextXAlignment.Left
+        optBtn.ZIndex = 11
+
+        optBtn.MouseButton1Click:Connect(function()
+            selected = opt
+            headerBtn.Text = "  " .. text .. ": " .. tostring(selected) .. "  v"
+            toggle()
+            if callback then callback(selected) end
+        end)
+    end
+end
+
+function CVVgui:Unload(windowObj)
+    for _, conn in ipairs(self.Connections) do
+        if conn.Connected then conn:Disconnect() end
+    end
+    table.clear(self.Connections)
+    if windowObj and windowObj.ScreenGui then windowObj.ScreenGui:Destroy() end
+    if notifGui then notifGui:Destroy() end
+end
+
+return CVVgui
