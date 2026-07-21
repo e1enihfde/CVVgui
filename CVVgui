@@ -81,3 +81,5 @@ function CVVgui:Unload(screenGui)
     table.clear(self.Connections)
     if screenGui then screenGui:Destroy() end
 end
+
+return CVVgui
