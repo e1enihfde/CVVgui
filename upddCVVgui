@@ -4,11 +4,12 @@ CVVgui.IsInteracting = false
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local tweenInfoFast = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 local tweenInfoBack = TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+local tweenInfoSmooth = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
--- Система уведомлений
 local notifGui
 local notifContainer
 
@@ -25,14 +26,14 @@ local function getNotifContainer()
     end
 
     notifContainer = Instance.new("Frame", notifGui)
-    notifContainer.Size = UDim2.new(0, 240, 1, -20)
-    notifContainer.Position = UDim2.new(1, -250, 0, 10)
+    notifContainer.Size = UDim2.new(0, 250, 1, -20)
+    notifContainer.Position = UDim2.new(1, -260, 0, 10)
     notifContainer.BackgroundTransparency = 1
 
     local layout = Instance.new("UIListLayout", notifContainer)
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
-    layout.Padding = UDim.new(0, 6)
+    layout.Padding = UDim.new(0, 8)
 
     return notifContainer
 end
@@ -41,38 +42,44 @@ function CVVgui:Notify(titleText, contentText, duration)
     duration = duration or 3
     local container = getNotifContainer()
 
-    local frame = Instance.new("Frame", container)
-    frame.Size = UDim2.new(1, 0, 0, 48)
-    frame.Position = UDim2.new(1, 260, 0, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    frame.BorderColor3 = Color3.fromRGB(45, 45, 45)
+    local frame = Instance.new("CanvasGroup", container)
+    frame.Size = UDim2.new(1, 0, 0, 50)
+    frame.Position = UDim2.new(1, 50, 0, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+    frame.BorderColor3 = Color3.fromRGB(50, 50, 50)
     frame.BorderSizePixel = 1
+    frame.GroupTransparency = 1
+
+    local accent = Instance.new("Frame", frame)
+    accent.Size = UDim2.new(0, 2, 1, 0)
+    accent.BackgroundColor3 = Color3.fromRGB(80, 160, 255)
+    accent.BorderSizePixel = 0
 
     local title = Instance.new("TextLabel", frame)
-    title.Size = UDim2.new(1, -10, 0, 20)
-    title.Position = UDim2.new(0, 8, 0, 4)
+    title.Size = UDim2.new(1, -16, 0, 20)
+    title.Position = UDim2.new(0, 12, 0, 6)
     title.BackgroundTransparency = 1
     title.Text = titleText or "Notification"
-    title.TextColor3 = Color3.fromRGB(220, 220, 220)
+    title.TextColor3 = Color3.fromRGB(235, 235, 235)
     title.Font = Enum.Font.Code
     title.TextSize = 13
     title.TextXAlignment = Enum.TextXAlignment.Left
 
     local desc = Instance.new("TextLabel", frame)
-    desc.Size = UDim2.new(1, -10, 0, 18)
-    desc.Position = UDim2.new(0, 8, 0, 24)
+    desc.Size = UDim2.new(1, -16, 0, 18)
+    desc.Position = UDim2.new(0, 12, 0, 26)
     desc.BackgroundTransparency = 1
     desc.Text = contentText or ""
-    desc.TextColor3 = Color3.fromRGB(150, 150, 150)
+    desc.TextColor3 = Color3.fromRGB(160, 160, 160)
     desc.Font = Enum.Font.Code
     desc.TextSize = 12
     desc.TextXAlignment = Enum.TextXAlignment.Left
 
-    TweenService:Create(frame, tweenInfoBack, {Position = UDim2.new(0, 0, 0, 0)}):Play()
+    TweenService:Create(frame, tweenInfoSmooth, {Position = UDim2.new(0, 0, 0, 0), GroupTransparency = 0}):Play()
 
     task.delay(duration, function()
         if frame and frame.Parent then
-            local hideTween = TweenService:Create(frame, tweenInfoFast, {Position = UDim2.new(1, 260, 0, 0)})
+            local hideTween = TweenService:Create(frame, tweenInfoFast, {Position = UDim2.new(1, 50, 0, 0), GroupTransparency = 1})
             hideTween:Play()
             hideTween.Completed:Connect(function()
                 frame:Destroy()
@@ -83,6 +90,15 @@ end
 
 function CVVgui:CreateWindow(titleText, toggleKey)
     toggleKey = toggleKey or Enum.KeyCode.RightControl
+
+    local successInfo, gameInfo = pcall(function()
+        return MarketplaceService:GetProductInfo(game.PlaceId)
+    end)
+    local gameName = (successInfo and gameInfo and gameInfo.Name) or game.Name
+
+    task.delay(0.4, function()
+        self:Notify("System", "Game: " .. gameName, 4)
+    end)
 
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "CVVgui_Main"
@@ -97,26 +113,32 @@ function CVVgui:CreateWindow(titleText, toggleKey)
     local mainFrame = Instance.new("Frame", screenGui)
     mainFrame.Size = UDim2.new(0, 360, 0, 300)
     mainFrame.Position = hiddenPos
-    mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    mainFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    mainFrame.BorderColor3 = Color3.fromRGB(45, 45, 45)
     mainFrame.BorderSizePixel = 1
     mainFrame.Active = true
     mainFrame.BackgroundTransparency = 1
 
+    local topAccent = Instance.new("Frame", mainFrame)
+    topAccent.Size = UDim2.new(1, 0, 0, 2)
+    topAccent.BackgroundColor3 = Color3.fromRGB(80, 160, 255)
+    topAccent.BorderSizePixel = 0
+
     local title = Instance.new("TextLabel", mainFrame)
     title.Size = UDim2.new(1, 0, 0, 25)
-    title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    title.Position = UDim2.new(0, 0, 0, 2)
+    title.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
     title.BorderColor3 = Color3.fromRGB(40, 40, 40)
     title.BorderSizePixel = 1
     title.Text = "  " .. titleText
-    title.TextColor3 = Color3.fromRGB(220, 220, 220)
+    title.TextColor3 = Color3.fromRGB(235, 235, 235)
     title.Font = Enum.Font.Code
     title.TextSize = 14
     title.TextXAlignment = Enum.TextXAlignment.Left
 
     local tabBar = Instance.new("Frame", mainFrame)
-    tabBar.Size = UDim2.new(1, -10, 0, 26)
-    tabBar.Position = UDim2.new(0, 5, 0, 30)
+    tabBar.Size = UDim2.new(1, -12, 0, 26)
+    tabBar.Position = UDim2.new(0, 6, 0, 32)
     tabBar.BackgroundTransparency = 1
 
     local tabLayout = Instance.new("UIListLayout", tabBar)
@@ -125,8 +147,8 @@ function CVVgui:CreateWindow(titleText, toggleKey)
     tabLayout.Padding = UDim.new(0, 4)
 
     local contentArea = Instance.new("Frame", mainFrame)
-    contentArea.Size = UDim2.new(1, -10, 1, -66)
-    contentArea.Position = UDim2.new(0, 5, 0, 60)
+    contentArea.Size = UDim2.new(1, -12, 1, -70)
+    contentArea.Position = UDim2.new(0, 6, 0, 64)
     contentArea.BackgroundTransparency = 1
 
     local isOpen = true
@@ -196,11 +218,11 @@ function CVVgui:CreateWindow(titleText, toggleKey)
     function windowObj:CreateTab(tabName)
         local tabBtn = Instance.new("TextButton", windowObj.TabBar)
         tabBtn.Size = UDim2.new(0, 85, 1, 0)
-        tabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+        tabBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
         tabBtn.BorderColor3 = Color3.fromRGB(40, 40, 40)
         tabBtn.BorderSizePixel = 1
         tabBtn.Text = tabName
-        tabBtn.TextColor3 = Color3.fromRGB(140, 140, 140)
+        tabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
         tabBtn.Font = Enum.Font.Code
         tabBtn.TextSize = 12
 
@@ -223,12 +245,12 @@ function CVVgui:CreateWindow(titleText, toggleKey)
         local function activate()
             for _, t in ipairs(windowObj.Tabs) do
                 t.Container.Visible = false
-                t.Button.TextColor3 = Color3.fromRGB(140, 140, 140)
-                t.Button.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+                t.Button.TextColor3 = Color3.fromRGB(150, 150, 150)
+                t.Button.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
             end
             tabContainer.Visible = true
-            tabBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
-            tabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            tabBtn.TextColor3 = Color3.fromRGB(235, 235, 235)
+            tabBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         end
 
         tabBtn.MouseButton1Click:Connect(activate)
@@ -248,11 +270,11 @@ end
 function CVVgui:CreateButton(parent, text, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, -6, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    btn.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.BorderColor3 = Color3.fromRGB(45, 45, 45)
     btn.BorderSizePixel = 1
     btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.TextColor3 = Color3.fromRGB(210, 210, 210)
     btn.Font = Enum.Font.Code
     btn.TextSize = 13
 
@@ -266,11 +288,11 @@ function CVVgui:CreateToggle(parent, text, defaultState, callback)
 
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, -6, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-    btn.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    btn.BorderColor3 = Color3.fromRGB(45, 45, 45)
     btn.BorderSizePixel = 1
     btn.Text = "  " .. text .. ": " .. (enabled and "[ ON ]" or "[ OFF ]")
-    btn.TextColor3 = enabled and Color3.fromRGB(230, 230, 230) or Color3.fromRGB(130, 130, 130)
+    btn.TextColor3 = enabled and Color3.fromRGB(240, 240, 240) or Color3.fromRGB(140, 140, 140)
     btn.Font = Enum.Font.Code
     btn.TextSize = 13
     btn.TextXAlignment = Enum.TextXAlignment.Left
@@ -278,7 +300,7 @@ function CVVgui:CreateToggle(parent, text, defaultState, callback)
     table.insert(self.Connections, btn.MouseButton1Click:Connect(function()
         enabled = not enabled
         btn.Text = "  " .. text .. ": " .. (enabled and "[ ON ]" or "[ OFF ]")
-        btn.TextColor3 = enabled and Color3.fromRGB(230, 230, 230) or Color3.fromRGB(130, 130, 130)
+        btn.TextColor3 = enabled and Color3.fromRGB(240, 240, 240) or Color3.fromRGB(140, 140, 140)
         if callback then callback(enabled) end
     end))
 end
@@ -286,8 +308,8 @@ end
 function CVVgui:CreateSlider(parent, text, minVal, maxVal, defaultVal, callback)
     local sliderFrame = Instance.new("Frame", parent)
     sliderFrame.Size = UDim2.new(1, -6, 0, 45)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    sliderFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+    sliderFrame.BorderColor3 = Color3.fromRGB(45, 45, 45)
     sliderFrame.BorderSizePixel = 1
 
     local label = Instance.new("TextLabel", sliderFrame)
@@ -295,21 +317,21 @@ function CVVgui:CreateSlider(parent, text, minVal, maxVal, defaultVal, callback)
     label.Position = UDim2.new(0, 5, 0, 2)
     label.BackgroundTransparency = 1
     label.Text = text .. ": " .. tostring(defaultVal)
-    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.TextColor3 = Color3.fromRGB(210, 210, 210)
     label.Font = Enum.Font.Code
     label.TextSize = 12
     label.TextXAlignment = Enum.TextXAlignment.Left
 
     local track = Instance.new("Frame", sliderFrame)
-    track.Size = UDim2.new(1, -10, 0, 12)
-    track.Position = UDim2.new(0, 5, 0, 25)
+    track.Size = UDim2.new(1, -10, 0, 10)
+    track.Position = UDim2.new(0, 5, 0, 26)
     track.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
     track.BorderColor3 = Color3.fromRGB(40, 40, 40)
     track.BorderSizePixel = 1
 
     local fill = Instance.new("Frame", track)
     fill.Size = UDim2.new((defaultVal - minVal) / (maxVal - minVal), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    fill.BackgroundColor3 = Color3.fromRGB(80, 160, 255)
     fill.BorderSizePixel = 0
 
     local isDragging = false
@@ -350,8 +372,8 @@ function CVVgui:CreateDropdown(parent, text, options, defaultOpt, callback)
     
     local dropdownFrame = Instance.new("Frame", parent)
     dropdownFrame.Size = UDim2.new(1, -6, 0, 30)
-    dropdownFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    dropdownFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    dropdownFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+    dropdownFrame.BorderColor3 = Color3.fromRGB(45, 45, 45)
     dropdownFrame.BorderSizePixel = 1
     dropdownFrame.ClipsDescendants = true
 
@@ -359,7 +381,7 @@ function CVVgui:CreateDropdown(parent, text, options, defaultOpt, callback)
     headerBtn.Size = UDim2.new(1, 0, 0, 30)
     headerBtn.BackgroundTransparency = 1
     headerBtn.Text = "  " .. text .. ": " .. tostring(selected) .. "  v"
-    headerBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    headerBtn.TextColor3 = Color3.fromRGB(210, 210, 210)
     headerBtn.Font = Enum.Font.Code
     headerBtn.TextSize = 12
     headerBtn.TextXAlignment = Enum.TextXAlignment.Left
@@ -367,8 +389,8 @@ function CVVgui:CreateDropdown(parent, text, options, defaultOpt, callback)
     local listFrame = Instance.new("Frame", dropdownFrame)
     listFrame.Size = UDim2.new(1, 0, 0, #options * 24)
     listFrame.Position = UDim2.new(0, 0, 0, 30)
-    listFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    listFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    listFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    listFrame.BorderColor3 = Color3.fromRGB(45, 45, 45)
     listFrame.BorderSizePixel = 1
 
     local listLayout = Instance.new("UIListLayout", listFrame)
@@ -387,7 +409,7 @@ function CVVgui:CreateDropdown(parent, text, options, defaultOpt, callback)
     for _, opt in ipairs(options) do
         local optBtn = Instance.new("TextButton", listFrame)
         optBtn.Size = UDim2.new(1, 0, 0, 24)
-        optBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        optBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
         optBtn.BorderColor3 = Color3.fromRGB(35, 35, 35)
         optBtn.BorderSizePixel = 1
         optBtn.Text = "  " .. tostring(opt)
@@ -408,8 +430,8 @@ end
 function CVVgui:CreateInput(parent, text, placeholderText, callback)
     local inputFrame = Instance.new("Frame", parent)
     inputFrame.Size = UDim2.new(1, -6, 0, 32)
-    inputFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    inputFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    inputFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+    inputFrame.BorderColor3 = Color3.fromRGB(45, 45, 45)
     inputFrame.BorderSizePixel = 1
 
     local label = Instance.new("TextLabel", inputFrame)
@@ -417,7 +439,7 @@ function CVVgui:CreateInput(parent, text, placeholderText, callback)
     label.Position = UDim2.new(0, 5, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
-    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.TextColor3 = Color3.fromRGB(210, 210, 210)
     label.Font = Enum.Font.Code
     label.TextSize = 12
     label.TextXAlignment = Enum.TextXAlignment.Left
@@ -425,12 +447,12 @@ function CVVgui:CreateInput(parent, text, placeholderText, callback)
     local textBox = Instance.new("TextBox", inputFrame)
     textBox.Size = UDim2.new(0.5, -5, 1, -6)
     textBox.Position = UDim2.new(0.5, 0, 0, 3)
-    textBox.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    textBox.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
     textBox.BorderColor3 = Color3.fromRGB(40, 40, 40)
     textBox.BorderSizePixel = 1
     textBox.Text = ""
     textBox.PlaceholderText = placeholderText or "Type here..."
-    textBox.TextColor3 = Color3.fromRGB(220, 220, 220)
+    textBox.TextColor3 = Color3.fromRGB(230, 230, 230)
     textBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
     textBox.Font = Enum.Font.Code
     textBox.TextSize = 12
@@ -445,7 +467,7 @@ function CVVgui:CreateLabel(parent, text)
     label.Size = UDim2.new(1, -6, 0, 22)
     label.BackgroundTransparency = 1
     label.Text = "  " .. text
-    label.TextColor3 = Color3.fromRGB(150, 150, 150)
+    label.TextColor3 = Color3.fromRGB(160, 160, 160)
     label.Font = Enum.Font.Code
     label.TextSize = 12
     label.TextXAlignment = Enum.TextXAlignment.Left
